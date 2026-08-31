@@ -121,7 +121,7 @@ function M.close()
 end
 
 local function cycle(dir)
-  state.interval = data.cycle_interval(state.spec, state.interval, dir)
+  state.interval = data.cycle_interval(state.interval, dir)
   state.candles = nil
   show_loading()
   M.refresh()
@@ -180,9 +180,9 @@ end
 function M.open(spec, interval)
   state.spec = spec
   state.interval = interval or config.options.default_interval
-  -- snap to an interval the provider supports
-  if not data.supports(spec, state.interval) then
-    state.interval = data.cycle_interval(spec, state.interval, 1)
+  -- snap to a supported interval
+  if not data.supports(state.interval) then
+    state.interval = data.cycle_interval(state.interval, 1)
   end
   state.candles = nil
   if not win_valid() then

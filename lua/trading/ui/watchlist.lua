@@ -5,13 +5,14 @@ local fmt = require("trading.format")
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("trading_watchlist")
-local LOADING = "loading" -- sentinel in state.quotes while a fetch is in flight
 
 local state = {
   buf = nil,
   win = nil,
-  quotes = {}, -- canonical spec -> quote | {err = "..."} | LOADING
+  quotes = {}, -- canonical spec -> quote | {err = "..."}; kept while refetching so rows never flash
+  inflight = {}, -- canonical spec -> true while a fetch is running
   timer = nil, -- debounce for buffer edits
+  poll = nil, -- periodic quote refresh
   saved = nil, -- last JSON written, to skip no-op saves
 }
 
@@ -78,7 +79,7 @@ local function update_marks(rows)
   for _, row in ipairs(rows) do
     local q = state.quotes[row.spec]
     local virt
-    if not q or q == LOADING then
+    if not q then
       virt = { { "…", "Comment" } }
     elseif q.err then
       virt = { { "✗ no data", "ErrorMsg" } }
@@ -100,12 +101,13 @@ local function update_marks(rows)
 end
 
 local function fetch_quote(spec)
-  if state.quotes[spec] == LOADING then
+  if state.inflight[spec] then
     return
   end
-  state.quotes[spec] = LOADING
+  state.inflight[spec] = true
   data.quote(spec, function(err, quote)
     vim.schedule(function()
+      state.inflight[spec] = nil
       state.quotes[spec] = err and { err = err } or quote
       if buf_valid() then
         update_marks((parse_buffer()))
@@ -134,11 +136,11 @@ local function debounced_sync()
   state.timer:start(500, 0, vim.schedule_wrap(sync))
 end
 
+---Refetch every symbol; existing values stay on screen until replaced.
 function M.refresh()
   if not buf_valid() then
     return
   end
-  state.quotes = {}
   local rows, symbols = parse_buffer()
   for _, spec in ipairs(symbols) do
     fetch_quote(spec)
@@ -197,14 +199,21 @@ function M.open()
     buffer = state.buf,
     callback = debounced_sync,
   })
+  local every = config.options.watchlist_refresh
+  if every > 0 then
+    state.poll = vim.uv.new_timer()
+    state.poll:start(every * 1000, every * 1000, vim.schedule_wrap(M.refresh))
+  end
   -- single teardown path, whether closed via `q` or :q
   vim.api.nvim_create_autocmd("WinClosed", {
     pattern = tostring(state.win),
     once = true,
     callback = function()
-      state.timer:stop()
-      state.timer:close()
-      state.timer = nil
+      for _, t in ipairs({ state.timer, state.poll }) do
+        t:stop()
+        t:close()
+      end
+      state.timer, state.poll = nil, nil
       if buf_valid() then
         local _, symbols = parse_buffer()
         save_symbols(symbols)

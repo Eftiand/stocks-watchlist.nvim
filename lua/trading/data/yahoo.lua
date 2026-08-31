@@ -1,8 +1,4 @@
-local http = require("trading.data.http")
-
 local M = {}
-
-M.name = "yahoo"
 
 -- our interval name -> yahoo interval + range that yields enough candles
 M.intervals = {
@@ -13,6 +9,24 @@ M.intervals = {
   ["1d"] = { i = "1d", range = "1y" },
   ["1wk"] = { i = "1wk", range = "5y" },
 }
+
+---GET a URL and decode the JSON body.
+local function get_json(url, cb)
+  vim.system(
+    { "curl", "-fsSL", "--max-time", "10", "-H", "User-Agent: Mozilla/5.0", url },
+    { text = true },
+    function(out)
+      if out.code ~= 0 then
+        return cb(("yahoo fetch failed (curl exit %d)"):format(out.code))
+      end
+      local ok, json = pcall(vim.json.decode, out.stdout)
+      if not ok or type(json) ~= "table" then
+        return cb("yahoo returned invalid JSON")
+      end
+      cb(nil, json)
+    end
+  )
+end
 
 local function chart_result(json, symbol)
   local result = vim.tbl_get(json, "chart", "result", 1)
@@ -29,7 +43,7 @@ end
 function M.quote(symbol, cb)
   local url = ("https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1m&range=1d&includePrePost=true")
     :format(vim.uri_encode(symbol))
-  http.get_json(url, "yahoo", function(err, json)
+  get_json(url, function(err, json)
     if err then
       return cb(err .. " for " .. symbol)
     end
@@ -91,7 +105,7 @@ function M.fetch(symbol, interval, cb)
   local prepost = (spec.i:match("m$") ~= nil) and "&includePrePost=true" or ""
   local url = ("https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=%s&range=%s%s")
     :format(vim.uri_encode(symbol), spec.i, spec.range, prepost)
-  http.get_json(url, "yahoo", function(err, json)
+  get_json(url, function(err, json)
     if err then
       return cb(err .. " for " .. symbol)
     end
