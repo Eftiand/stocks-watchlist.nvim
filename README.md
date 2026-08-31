@@ -23,7 +23,7 @@ lazy.nvim:
 
 ```lua
 {
-  "kristianjeremic/trading-nvim",
+  "Eftiand/trading-nvim",
   cmd = { "TradingView", "TradingWatchlist" },
   opts = {},
 }
