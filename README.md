@@ -1,0 +1,86 @@
+# trading.nvim
+
+Candlestick charts and a live watchlist inside Neovim. Pure Lua, no dependencies beyond `curl`. Requires Neovim 0.10+.
+
+```
+ yahoo:AAPL · 1d    319.70  ▲ +5.12 (+1.63%)
+ 344.57┤                                    │ │
+       │                                  │ ╂ ╂
+ 332.77┤                      ┃ ╂ ┃     ┃ │     ╂
+       │                    │ ┃ │ ┃ │ │ ┃       │
+ 320.96┤                │   ┃     │ ┃ │ ┃
+       │              │ ╂   ┃         │
+ 309.16┤      │ ┃ │ ┃ ╂ │ ╂             ┃ │
+       └┬───────────┬───────────┬───────────┬───
+        17 Jun      02 Jul      17 Jul      31 Jul
+```
+
+> Note: charts are drawn from market data (Yahoo Finance for stocks/ETFs/forex, Binance for crypto) — TradingView itself has no public data API. No API keys needed.
+
+## Install
+
+lazy.nvim:
+
+```lua
+{
+  "kristianjeremic/trading-nvim",
+  cmd = { "TradingView", "TradingWatchlist" },
+  opts = {},
+}
+```
+
+## Usage
+
+| Command | Action |
+|---|---|
+| `:TradingView AAPL` | Open a chart (default interval) |
+| `:TradingView binance:BTCUSDT 4h` | Crypto chart via Binance, 4h candles |
+| `:TradingWatchlist` | Toggle the watchlist sidebar (right split) |
+
+Symbols from the `default_provider` (yahoo) are bare (`AAPL`); others are prefixed (`binance:BTCUSDT`).
+
+### Chart keymaps
+
+- `q` close · `r` refresh · `]` / `[` cycle interval
+
+### Watchlist sidebar
+
+The sidebar **is** the list: one symbol per editable line, quotes shown as right-aligned virtual text. `dd` to delete, `o`/paste to add, reorder freely — changes autosave to `stdpath("data")/trading-nvim/watchlist.json` (blank lines and duplicates dropped). During extended hours a `pre`/`post` quote is shown next to the regular one.
+
+- `<CR>` open chart for symbol under cursor
+- `r` refresh quotes · `q` close
+
+## Configuration
+
+Defaults:
+
+```lua
+require("trading").setup({
+  default_provider = "yahoo",  -- "yahoo" | "binance"
+  default_interval = "1d",
+  intervals = { "1m", "5m", "15m", "1h", "4h", "1d", "1wk" },
+  watchlist = { "AAPL", "MSFT", "binance:BTCUSDT" }, -- seed; edited list persists to disk
+  watchlist_width = 42, -- sidebar width
+  chart = {
+    width = 0.9,   -- fraction of editor width
+    height = 0.85, -- fraction of editor height
+    border = "rounded",
+  },
+  keymaps = {
+    quit = "q",
+    refresh = "r",
+    next_interval = "]",
+    prev_interval = "[",
+    open = "<CR>",  -- watchlist
+  },
+})
+```
+
+Colors: `TradingUp` (`#26a69a`) and `TradingDown` (`#ef5350`) highlight groups, override with `vim.api.nvim_set_hl`.
+
+## Providers
+
+- **yahoo** — stocks, ETFs, indices (`^GSPC`), forex (`EURUSD=X`). Intervals: 1m, 5m, 15m, 1h, 1d, 1wk (no 4h).
+- **binance** — spot crypto pairs (`BTCUSDT`). All intervals.
+
+Both use unauthenticated public endpoints; unofficial in Yahoo's case, so subject to change.
