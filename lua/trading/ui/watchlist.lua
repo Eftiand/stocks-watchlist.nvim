@@ -186,12 +186,6 @@ function M.open()
   end
   map(km.quit, M.close)
   map(km.refresh, M.refresh)
-  map(km.open, function()
-    local s = vim.trim(vim.api.nvim_get_current_line())
-    if s ~= "" then
-      require("trading.ui.chart").open(data.canonical(s))
-    end
-  end)
 
   -- the list IS the buffer: dd/o/p and typing edit it, changes autosave
   state.timer = vim.uv.new_timer()
