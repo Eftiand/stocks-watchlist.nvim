@@ -1,4 +1,4 @@
-local yahoo = require("trading.data.yahoo")
+local yahoo = require("stocks-watchlist.data.yahoo")
 
 local M = {}
 
