@@ -1,10 +1,10 @@
-local config = require("trading.config")
-local data = require("trading.data")
-local fmt = require("trading.format")
+local config = require("stocks-watchlist.config")
+local data = require("stocks-watchlist.data")
+local fmt = require("stocks-watchlist.format")
 
 local M = {}
 
-local ns = vim.api.nvim_create_namespace("trading_watchlist")
+local ns = vim.api.nvim_create_namespace("stocks_watchlist")
 
 local state = {
   buf = nil,
@@ -16,7 +16,7 @@ local state = {
   saved = nil, -- last JSON written, to skip no-op saves
 }
 
-local store_path = vim.fn.stdpath("data") .. "/trading-nvim/watchlist.json"
+local store_path = vim.fn.stdpath("data") .. "/stocks-watchlist.nvim/watchlist.json"
 
 local function load_symbols()
   local list = config.options.watchlist
@@ -84,10 +84,10 @@ local function update_marks(rows)
     elseif q.err then
       virt = { { "✗ no data", "ErrorMsg" } }
     else
-      local hl = q.change >= 0 and "TradingUp" or "TradingDown"
+      local hl = q.change >= 0 and "StocksUp" or "StocksDown"
       virt = { { fmt.quote(q.price, q.pct), hl } }
       if q.ext then
-        local ehl = q.ext.change >= 0 and "TradingUp" or "TradingDown"
+        local ehl = q.ext.change >= 0 and "StocksUp" or "StocksDown"
         table.insert(virt, { "  " .. q.session .. " ", "Comment" })
         table.insert(virt, { fmt.quote(q.ext.price, q.ext.pct), ehl })
       end
@@ -164,7 +164,7 @@ function M.open()
   state.buf = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(state.buf, 0, -1, false, load_symbols())
   vim.bo[state.buf].bufhidden = "wipe"
-  vim.bo[state.buf].filetype = "trading-watchlist"
+  vim.bo[state.buf].filetype = "stocks-watchlist"
 
   state.win = vim.api.nvim_open_win(state.buf, true, {
     split = "right",

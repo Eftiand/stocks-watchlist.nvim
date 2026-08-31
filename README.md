@@ -1,4 +1,4 @@
-# trading.nvim
+# stocks-watchlist.nvim
 
 A live stock/crypto watchlist sidebar for Neovim. Pure Lua, no dependencies beyond `curl`. Requires Neovim 0.10+.
 
@@ -18,10 +18,10 @@ lazy.nvim:
 
 ```lua
 {
-  "Eftiand/trading-nvim",
-  cmd = "TradingWatchlist",
+  "Eftiand/stocks-watchlist.nvim",
+  cmd = "StocksWatchlist",
   keys = {
-    { "<leader>wl", "<cmd>TradingWatchlist<cr>", desc = "Toggle watchlist" },
+    { "<leader>wl", "<cmd>StocksWatchlist<cr>", desc = "Toggle watchlist" },
   },
   opts = {},
 }
@@ -29,9 +29,9 @@ lazy.nvim:
 
 ## Usage
 
-`:TradingWatchlist` toggles the sidebar (right split).
+`:StocksWatchlist` toggles the sidebar (right split).
 
-The sidebar **is** the list: one symbol per editable line, quotes shown as right-aligned virtual text. `dd` to delete, `o`/paste to add, reorder freely — changes autosave to `stdpath("data")/trading-nvim/watchlist.json` (blank lines and duplicates dropped). Symbols are Yahoo Finance tickers: `AAPL`, `BTC-USD`, `EURUSD=X`, `^GSPC`.
+The sidebar **is** the list: one symbol per editable line, quotes shown as right-aligned virtual text. `dd` to delete, `o`/paste to add, reorder freely — changes autosave to `stdpath("data")/stocks-watchlist.nvim/watchlist.json` (blank lines and duplicates dropped). Symbols are Yahoo Finance tickers: `AAPL`, `BTC-USD`, `EURUSD=X`, `^GSPC`.
 
 Quotes auto-refresh every `watchlist_refresh` seconds while the sidebar is open. During extended hours a `pre`/`post` quote is shown next to the regular one.
 
@@ -42,7 +42,7 @@ Keymaps: `r` refresh now · `q` close.
 Defaults:
 
 ```lua
-require("trading").setup({
+require("stocks-watchlist").setup({
   watchlist = { "AAPL", "MSFT", "BTC-USD" }, -- seed; edited list persists to disk
   watchlist_width = 42, -- sidebar width
   watchlist_refresh = 30, -- seconds between quote refreshes while open (0 disables)
@@ -53,4 +53,4 @@ require("trading").setup({
 })
 ```
 
-Colors: `TradingUp` (`#26a69a`) and `TradingDown` (`#ef5350`) highlight groups, override with `vim.api.nvim_set_hl`.
+Colors: `StocksUp` (`#26a69a`) and `StocksDown` (`#ef5350`) highlight groups, override with `vim.api.nvim_set_hl`.
